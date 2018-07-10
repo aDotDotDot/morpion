@@ -2,21 +2,54 @@
 import random
 from PIL import Image
 class Grid:
-    def __init__(self, grid=[[0, 0, 0], [0, 0, 0], [0, 0, 0]]):
-        self.grid = grid
+    def __init__(self, grid=None, isDiscord=False):
+        if not grid:
+            self.grid = [[0, 0, 0], [0, 0, 0], [0, 0, 0]]
+        else:
+            self.grid = grid
         self.lastTurn = 0
+        self.isDiscord = isDiscord
         self.opposites = {'X': 'O', 'O': 'X'}
+        self.displayItems = {'X': ':x:', 'O': ':o:'}
+        self.emojiToSymbole = {"1⃣": {"eq": ":one:", "pos": (0, 0)},
+                          "2⃣": {"eq": ":two:", "pos": (0, 1)},
+                          "3⃣": {"eq": ":three:", "pos": (0, 2)},
+                          "4⃣": {"eq": ":four:", "pos": (1, 0)},
+                          "5⃣": {"eq": ":five:", "pos": (1, 1)},
+                          "6⃣": {"eq": ":six:", "pos": (1, 2)},
+                          "7⃣": {"eq": ":seven:", "pos": (2, 0)},
+                          "8⃣": {"eq": ":eight:", "pos": (2, 1)},
+                          "9⃣": {"eq": ":nine:", "pos": (2, 2)}}
+        self.posToEmojis = [["1⃣","2⃣","3⃣"],
+                            ["4⃣","5⃣","6⃣"],
+                            ["7⃣","8⃣","9⃣"]]
 
     def __str__(self):
-        strR = "-------------"
+        if self.isDiscord:
+            strR = "-------------------"
+        else:
+            strR = "--------------"
+        cptI = 0
         for i in self.grid:
             strR += "\n| "
+            cptP = 0
             for p in i:
                 if p == 0:
-                    strR += "  | "
+                    if self.isDiscord:
+                        strR += self.posToEmojis[cptI][cptP] + " | "
+                    else:
+                        strR += "  | "
                 else:
-                    strR += p + " | "
-            strR += "\n-------------"
+                    if self.isDiscord:
+                        strR += self.displayItems[p] + " | "
+                    else:
+                        strR += p + " | "
+                cptP += 1
+            if self.isDiscord:
+                strR += "\n-------------------"
+            else:
+                strR += "\n--------------"
+            cptI += 1
         return strR
 
     def drawIt(self):
@@ -122,19 +155,19 @@ class Grid:
 
     def play(self, item, x, y):
         if self.isComplete():
-            print("Cette partie est déjà terminée")
+            #print("Cette partie est déjà terminée")
             return True
         if item != self.lastTurn:
             if x in range(3) and y in range(3) and self.grid[x][y] == 0:
-                print("Je place mon " + item + " en " + str(x) + " " + str(y))
+                #print("Je place mon " + item + " en " + str(x) + " " + str(y))
                 self.grid[x][y] = item
                 self.lastTurn = item
                 return True
             else:
-                print("Vous ne pouvez pas placer de pion " + item + " ici " + str(x) + " " + str(y))
+                #print("Vous ne pouvez pas placer de pion " + item + " ici " + str(x) + " " + str(y))
                 return False
         else:
-            print("Ce n'est pas votre tour !")
+            #print("Ce n'est pas votre tour !")
             return True
 
     def canIWin(self, item, localGrid = None):
@@ -159,17 +192,12 @@ class Grid:
     def canILose(self, item):
         return self.canIWin(self.opposites[item])
 
-    def canIWinByPlaying(self, item, x, y):
-        localGrid = self.grid.copy()[:]
-        localGrid[x][y] = item
-        return self.canIWin(item, localGrid)
-
     def botPlay(self, item):
         if self.isComplete():
-            print("Cette partie est déjà terminée")
+            #print("Cette partie est déjà terminée")
             return False
         if item == self.lastTurn:
-            print("Ce n'est pas votre tour !")
+            #print("Ce n'est pas votre tour !")
             return False
         winningMove = self.canIWin(item)
         avoidingLose = self.canILose(item)
@@ -187,85 +215,30 @@ class Grid:
                 allEmptySpaces = self.allEmptySpaces()
                 # because I'm lazy, ideally we check here where we can open the most canIWin by testing everything
                 (posX, posY) = random.choice(allEmptySpaces)
-                """
-                self.grid[posX][posY] = item
-                cpt = 0
-                while not self.canIWin(item) and cpt < len(allEmptySpaces):
-                    self.grid[posX][posY] = 0
-                    (posX, posY) = random.choice(allEmptySpaces)
-                    self.grid[posX][posY] = item
-                    cpt += 1
-                self.grid[posX][posY] = 0
-                """
                 self.play(item, posX, posY)
 
         if self.isComplete():
-            print("Les "+item+" gagnent !")
+            #print("Les "+item+" gagnent !")
             return False
         elif self.isDraw():
-            print("Match nul")
+            #print("Match nul")
             return False
         else:
-            print("Tour suivant : "+self.opposites[item])
-            return(self.opposites[item])
+            #print("Tour suivant : "+self.opposites[item])
+            return(self.opposites[item], posX, posY)
 
 
-
+"""
 maGrille = Grid()
 print(maGrille)
-nextItem = maGrille.botPlay('O')
+nextItem,x,y = maGrille.botPlay('O')
 print(maGrille)
+
 while not (maGrille.isComplete() or maGrille.isDraw()):
-    nextItem = maGrille.botPlay(nextItem)
+    try:
+        (nextItem, x, y) = maGrille.botPlay(nextItem)
+    except:
+        pass
     print(maGrille)
 maGrille.drawIt()
-"""
-maGrille = Grid([[0, 0, 0], [0, 'X', 0], ['O', 0, 0]])
-print(maGrille)
-print(maGrille.isComplete())
-maGrille.botPlay('O')
-maGrille.botPlay('X')
-maGrille.botPlay('O')
-maGrille.botPlay('O')
-print(maGrille)
-"""
-
-"""
-print(maGrille.getDiagonals())
-print(maGrille.emptyDiagonalSpaces(0))
-print(maGrille.emptyDiagonalSpaces(1))
-"""
-
-"""
-print(maGrille.getLine(1))
-print(maGrille.getColumn(1))
-maGrille.play('O', 0, 0)
-maGrille.play('O', 0, 0)
-maGrille.play('X', 2, 2)
-print(maGrille)
-"""
-
-"""
-def ligne(tupleG):
-    (a,b,c) = tupleG
-    return (a != 0 and a == b and a == c)
-
-def estFinie(grille):
-    #lignes
-    isF = ligne((grille[0][0], grille[0][1], grille[0][2]))
-    isF = isF or ligne((grille[1][0], grille[1][1], grille[1][2]))
-    isF = isF or ligne((grille[2][0], grille[2][1], grille[2][2]))
-    #colonnes
-    isF = isF or ligne((grille[0][0], grille[1][0], grille[2][0]))
-    isF = isF or ligne((grille[0][1], grille[1][1], grille[2][1]))
-    isF = isF or ligne((grille[0][2], grille[1][2], grille[2][2]))
-    #diagonales
-    isF = isF or ligne((grille[0][0], grille[1][1], grille[2][2]))
-    isF = isF or ligne((grille[2][0], grille[1][1], grille[0][2]))
-    return isF
-
-
-
-
-print(estFinie(grille))
 """
